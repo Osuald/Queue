@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node --experimental-sqlite src/server.js",
     "dev": "node --experimental-sqlite --watch src/server.js",
-    "test": "cross-env NODE_OPTIONS=--experimental-sqlite jest --runInBand --forceExit --detectOpenHandles"
+    "test": "cross-env NODE_OPTIONS=--experimental-sqlite jest --runInBand --forceExit --detectOpenHandles",
+    "test:coverage": "cross-env NODE_OPTIONS=--experimental-sqlite jest --runInBand --forceExit --detectOpenHandles --coverage",
+    "coverage": "npm run test:coverage"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
