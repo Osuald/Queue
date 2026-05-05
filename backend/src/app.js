@@ -2,6 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = "queuecare-jwt-secret-key-2024-dev";
+  console.warn("JWT_SECRET not set. Using development fallback secret.");
+}
+
 const authRoutes = require("./routes/auth");
 const appointmentRoutes = require("./routes/appointments");
 const queueRoutes = require("./routes/queue");

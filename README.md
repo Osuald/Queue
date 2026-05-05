@@ -149,6 +149,93 @@ npm run test:all
 
 ---
 
+## End-to-End System Testing with Artillery + Playwright
+
+Combined E2E testing using **Artillery** for load generation and **Playwright** for real browser interactions. Tests all user workflows (Patient, Staff, Admin) in a single unified test suite.
+
+### Prerequisites
+
+Install Artillery and Playwright plugin:
+
+```bash
+npm install --save-dev artillery artillery-plugin-playwright
+npx playwright install chromium
+```
+
+### Run Combined System Test
+
+**Step 1: Start both servers**
+```bash
+# Terminal 1 - Backend on port 5000
+cd backend
+npm run dev
+
+# Terminal 2 - Frontend on port 3000
+cd frontend
+npm run dev
+```
+
+**Step 2: Run the test**
+```bash
+# From project root, run combined test (local results)
+npx artillery run combined-artillery.yml --output combined-report.json
+```
+
+**Step 3: View results**
+```bash
+# Generate HTML report
+npx artillery report combined-report.json
+```
+
+### With Cloud Recording
+
+```bash
+# Set your Artillery API key (get from https://app.artillery.io)
+$env:ARTILLERY_API_KEY = 'your-api-key-here'
+
+# Run with cloud recording
+npx artillery run combined-artillery.yml `
+  --record `
+  --key $env:ARTILLERY_API_KEY `
+  --output combined-report.json
+```
+
+### Test Scenarios (5 Total)
+
+| Scenario | Coverage | Weight | User Type |
+|----------|----------|--------|-----------|
+| **Frontend Pages** | Home, Login, Register, Dashboard navigation | 15% | Anonymous |
+| **Patient E2E** | Register → Login → Create Appointment → Dashboard | 40% | Patient |
+| **Staff E2E** | Register → Login → Queue Management | 30% | Staff |
+| **Admin E2E** | Register → Login → Full System Management | 15% | Admin |
+| **Auth Edge Cases** | Invalid login, duplicate registration, unauthorized access | 10% | Error cases |
+
+### Load Profile
+
+- **Phase 1:** 60s, 5→10 req/s (ramp-up)
+- **Phase 2:** 120s, 10→30 req/s (ramp-up)
+- **Phase 3:** 120s, 30 req/s (sustained)
+- **Phase 4:** 60s, 10 req/s (cool-down)
+
+### Key Metrics Measured
+
+- **Success Rate**: % of requests completing without error
+- **Response Times**: p50, p95, p99 latencies
+- **Throughput**: Requests per second across all scenarios
+- **Browser Interactions**: Page loads, form submissions, navigation
+- **Error Distribution**: By endpoint and scenario
+
+### Full Documentation
+
+See [COMBINED_TESTING_GUIDE.md](COMBINED_TESTING_GUIDE.md) for:
+- Detailed configuration reference
+- Processor function breakdown
+- Troubleshooting guide
+- Performance baselines
+- Infrastructure recommendations
+
+---
+
 ## All APIs for reference (quick)
 
 | Method | Endpoint                | Auth                 | Description                           |

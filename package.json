@@ -7,7 +7,8 @@
     "test:ui": "npx playwright test",
     "test:all": "npm run test:api && npm run test:ui",
     "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev"
+    "dev:frontend": "cd frontend && npm run dev",
+    "artillery-report":"npx artillery run combined-artillery.yml --record --key a9_a81hyljfau51tvocv55fq488jsydo50c"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0"

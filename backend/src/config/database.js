@@ -18,6 +18,9 @@ const db = new DatabaseSync(dbPath);
 
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
+// Wait up to 5s for locked database pages under concurrent write load.
+db.exec('PRAGMA busy_timeout = 5000');
+db.exec('PRAGMA synchronous = NORMAL');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (

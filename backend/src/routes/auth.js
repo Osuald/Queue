@@ -15,6 +15,18 @@ function generateToken(user) {
   );
 }
 
+function hashPasswordSync(password) {
+  return bcrypt.hashSync(password, 10);
+}
+
+function verifyPasswordSync(plain, hashed) {
+  return bcrypt.compareSync(plain, hashed);
+}
+
+function decodeToken(token) {
+  return jwt.verify(token, process.env.JWT_SECRET);
+}
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
@@ -47,6 +59,7 @@ router.post('/register', async (req, res) => {
 
     return res.status(201).json({ message: 'Registration successful', user, token });
   } catch (err) {
+    console.error('auth/register error:', err);
     return res.status(500).json({ error: 'Server error' });
   }
 });
@@ -75,9 +88,16 @@ router.post('/login', async (req, res) => {
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
     });
-  } catch {
+  } catch (err) {
+    console.error('auth/login error:', err);
     return res.status(500).json({ error: 'Server error' });
   }
 });
 
-module.exports = router;
+// Export router and helper utilities for tests (no change to runtime flow)
+module.exports = Object.assign(router, {
+  generateToken,
+  hashPassword: hashPasswordSync,
+  verifyPassword: verifyPasswordSync,
+  decodeToken,
+});

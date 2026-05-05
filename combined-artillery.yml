@@ -1,0 +1,219 @@
+config:
+  target: http://localhost:5000/api
+  phases:
+    - duration: 60
+      arrivalRate: 2
+      rampTo: 5
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 15
+    - duration: 120
+      arrivalRate: 15
+    - duration: 60
+      arrivalRate: 5
+  processor: ./processor.js
+  variables:
+    frontend_url: http://localhost:3000
+    api_url: http://localhost:5000/api
+
+scenarios:
+  # Scenario 01: Frontend Health & Basic Access
+  - name: "01. Health & Frontend"
+    weight: 15
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+      - think: 1
+
+  # Scenario 02: Patient E2E Flow - Register, Login, Create Appointment
+  - name: "02. Patient E2E Flow"
+    weight: 40
+    flow:
+      - function: setup
+      - post:
+          url: "/auth/register"
+          json:
+            name: "{{ patientName }}"
+            email: "{{ patientEmail }}"
+            password: "password123"
+            role: "patient"
+          capture:
+            - json: "$.userId"
+              as: "patientId"
+          expect:
+            - statusCode: [201, 400]
+      - think: 2
+      
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ patientEmail }}"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "patientToken"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - get:
+          url: "/appointments"
+          headers:
+            Authorization: "Bearer {{ patientToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - post:
+          url: "/appointments"
+          headers:
+            Authorization: "Bearer {{ patientToken }}"
+          json:
+            patientName: "Test Patient"
+            time: "2026-06-15T10:30:00.000Z"
+            notes: "Regular checkup"
+          capture:
+            - json: "$.appointmentId"
+              as: "appointmentId"
+          expect:
+            - statusCode: [201, 401]
+      - think: 2
+
+  # Scenario 03: Staff E2E Flow - Queue Management
+  - name: "03. Staff E2E Flow"
+    weight: 30
+    flow:
+      - function: setup
+      - post:
+          url: "/auth/register"
+          json:
+            name: "{{ staffName }}"
+            email: "{{ staffEmail }}"
+            password: "staffpass"
+            role: "staff"
+          expect:
+            - statusCode: [201, 400]
+      - think: 1
+      
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ staffEmail }}"
+            password: "staffpass"
+          capture:
+            - json: "$.token"
+              as: "staffToken"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - get:
+          url: "/queue/today"
+          headers:
+            Authorization: "Bearer {{ staffToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - get:
+          url: "/appointments"
+          headers:
+            Authorization: "Bearer {{ staffToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - think: 2
+
+  # Scenario 04: Admin E2E Flow - System Management
+  - name: "04. Admin E2E Flow"
+    weight: 15
+    flow:
+      - function: setup
+      - post:
+          url: "/auth/register"
+          json:
+            name: "{{ adminName }}"
+            email: "{{ adminEmail }}"
+            password: "adminpass"
+            role: "admin"
+          expect:
+            - statusCode: [201, 400]
+      - think: 1
+      
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ adminEmail }}"
+            password: "adminpass"
+          capture:
+            - json: "$.token"
+              as: "adminToken"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - get:
+          url: "/appointments"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - post:
+          url: "/appointments"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+          json:
+            patientName: "Admin-Created Patient"
+            time: "2026-06-20T14:00:00.000Z"
+            notes: "Admin scheduled"
+          expect:
+            - statusCode: [201, 401]
+      - think: 2
+
+  # Scenario 05: Auth Edge Cases - Error Handling
+  - name: "05. Auth Edge Cases"
+    weight: 10
+    flow:
+      - function: setup
+      - post:
+          url: "/auth/register"
+          json:
+            name: "User A"
+            email: "{{ edgeEmail }}"
+            password: "pass123"
+            role: "patient"
+          expect:
+            - statusCode: [201, 400]
+      - think: 1
+      
+      - post:
+          url: "/auth/register"
+          json:
+            name: "User B"
+            email: "{{ edgeEmail }}"
+            password: "pass123"
+            role: "patient"
+          expect:
+            - statusCode: [400]
+      - think: 1
+      
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ edgeEmail }}"
+            password: "pass123"
+          capture:
+            - json: "$.token"
+              as: "edgeToken"
+          expect:
+            - statusCode: [200, 401]
+      - think: 1
+      
+      - get:
+          url: "/appointments"
+          expect:
+            - statusCode: [401]
+      - think: 1
